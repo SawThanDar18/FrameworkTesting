@@ -1,52 +1,56 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
+
 plugins {
     kotlin("multiplatform")
     id("com.android.library")
 }
 
 kotlin {
-    android()
-    ios {
-        binaries {
-            framework {
-                baseName = "shared"
+    val xcf = XCFramework()
+    android {
+        compilations.all {
+            kotlinOptions {
+                jvmTarget = "17"
             }
+        }
+    }
+
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach {
+        it.binaries.framework {
+            baseName = "shared"
+            xcf.add(this)
         }
     }
 
     sourceSets {
-        val commonMain by getting {
+        commonTest {
             dependencies {
-                // Common dependencies
+                implementation(kotlin("test-common"))
+                implementation(kotlin("test-annotations-common"))
             }
         }
-        val commonTest by getting {
+        val androidUnitTest by getting {
             dependencies {
-                implementation(kotlin("test"))
+                implementation(kotlin("test-junit"))
+                implementation("junit:junit:4.13.2")
             }
         }
-        val androidMain by getting {
-            dependencies {
-                implementation("androidx.core:core-ktx:1.6.0")
-            }
-        }
-        val iosMain by getting
-        val iosTest by getting
     }
 }
 
 android {
-    namespace = "co.nexlabs.betterhr.frameworktest"
-    compileSdk = 31
+    compileSdk = 34
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     defaultConfig {
         minSdk = 21
-        targetSdk = 31
     }
+    namespace = "co.nexlabs.betterhr.shared"
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-    kotlin {
-        jvmToolchain(17)
     }
 }
